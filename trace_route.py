@@ -26,7 +26,7 @@ def async_parse_tracert(target, on_new_node):
         elif len(elems) > 0 and elems[-1] == 'out.':
             num_timeouts += 1
             # on_new_node(None)
-            if num_timeouts >= 3:
+            if num_timeouts >= 1:
                 return -1
         p.commands[0].poll()
         time.sleep(0.05)

@@ -116,33 +116,34 @@
           }]
         }]
       };
-      console.log(restaurants.length);
-      for (i = 0; i < restaurants.length; i++){
-        // First create a point geometry (this is the location of the Titanic)
-        point[i] = {
-          type: "point", // autocasts as new Point()
-          longitude: restaurants[i].longitude,
-          latitude: restaurants[i].latitude
-        };
+      setTimeout(function() {
+          console.log(restaurants.length);
+          for (i = 0; i < restaurants.length; i++){
+            // First create a point geometry (this is the location of the Titanic)
+            point[i] = {
+              type: "point", // autocasts as new Point()
+              longitude: restaurants[i].longitude,
+              latitude: restaurants[i].latitude
+            };
 
-        markerSymbol[i] = {
-          type: "simple-marker", // autocasts as new SimpleMarkerSymbol()
-          color: [255, 50-(restaurants[i].rating)*10, 10],
-          outline: { // autocasts as new SimpleLineSymbol()
-            color: [255, 255, 255],
-            width: 1
+            markerSymbol[i] = {
+              type: "simple-marker", // autocasts as new SimpleMarkerSymbol()
+              color: [255, 50-(restaurants[i].rating)*10, 10],
+              outline: { // autocasts as new SimpleLineSymbol()
+                color: [255, 255, 255],
+                width: 1
+              }
+            };
+
+            // Create a graphic and add the geometry and symbol to it
+            pointGraphic[i] = new Graphic({
+              geometry: point[i],
+              symbol: markerSymbol[i],
+              popupTemplate: template
+            });
           }
-        };
 
-        // Create a graphic and add the geometry and symbol to it
-        pointGraphic[i] = new Graphic({
-          geometry: point[i],
-          symbol: markerSymbol[i],
-          popupTemplate: template
-        });
-      }
-
-      /*******************************************************************
+          /*******************************************************************
        * This click event sets generic content on the popup not tied to
        * a layer, graphic, or popupTemplate. The location of the point is
        * used as input to a reverse geocode method and the resulting
@@ -186,6 +187,10 @@
 
       // Add the graphics to the view's graphics layer
       view.graphics.addMany(pointGraphic);
+      }, 1000);
+
+
+
     });
   </script>
 </head>
@@ -193,7 +198,7 @@
 <body>
   <div id="viewDiv"></div>
   <div id="info">
-    City Name: <input type="number" id="cityName"></input>
+    City Name: <input type="number" id="cityName"/>
     <button type="button" id="btn">Go</button>
   </div>
 </body>

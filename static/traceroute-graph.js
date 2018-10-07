@@ -38,52 +38,60 @@ $(document).on('click', '#query-btn', function() {
     target: target
   }, function (data) {
     console.log(data);
+    document.getElementById('query-btn').disabled = true;
     let olElem = logNewQuery(target);
     let previousNum = 0;
     let previousNode = null;
+
     let refreshIntervalId = setInterval(function() {
       $.get("/api/traceroute/result?task_id="+data['task_id'], function(data2) {
         if(data2['status'] === 'timeout') {
-          if(previousNode) {
-            previousNode.data.color = 'orange';
-          }
+          previousNode.data.color = 'orange';
           logStatus(olElem, 'timeout requests');
+          document.getElementById('query-btn').disabled = false;
           clearInterval(refreshIntervalId);
         }
+
         let currNum = data2['nodes'].length;
         let newNode = null;
+
         if(currNum > previousNum) {
           let newNodeData = data2['nodes'][currNum-1];
           console.log(newNodeData);
           logNode(olElem, newNodeData);
 
-          if(newNodeData['addr'] in nodeDict) {
+          if(newNodeData['addr'] in nodeDict) { // it already exists
             newNode = nodeDict[newNodeData['addr']];
+
+            
+            if(previousNode === null) {
+              newNode.data.color = "purple";
+            } else {
+              graph.newEdge(previousNode, newNode, {color: '#00A0B0'});
+            }
           } else {
             newNode = graph.newNode({
-                label: newNodeData['addr'],
-                font: "10px Arial"
+              label: newNodeData['addr'],
+              font: "10px Arial"
             });
             nodeDict[newNodeData['addr']] = newNode;
 
             if(previousNode === null) {
-              newNode.data.color = "purple"
+              newNode.data.color = "purple";
             } else {
               graph.newEdge(previousNode, newNode, {color: '#00A0B0'});
             }
           }
 
-
-
           previousNum = currNum;
           previousNode = newNode;
-        }
-        if(data2['status'] === 'success') {
-          if(newNode) {
-            newNode.data.color = 'green';
 
-          }
+        }
+
+        if(data2['status'] === 'success') {
+          newNode.data.color = 'green';
           logStatus(olElem, 'destination reached');
+          document.getElementById('query-btn').disabled = false;
           clearInterval(refreshIntervalId);
         }
       });

@@ -24,6 +24,11 @@ def show_restaurants():
     return render_template("restaurants.html")
 
 
+@app.route('/restaurants-test')
+def show_restaurants_test():
+    return render_template("restaurants-test.html")
+
+
 api.add_resource(resources.TraceRouteRequest, '/api/traceroute/request')
 api.add_resource(resources.TraceRouteResult, '/api/traceroute/result')
 api.add_resource(resources.RestaurantRequest, '/restaurants/request')

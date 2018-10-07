@@ -4,11 +4,26 @@
     <script src="/static/springy.js"></script>
     <script src="/static/springyui.js"></script>
     <script src="/static/traceroute-graph.js"></script>
+    <style>
+        nav ul{height:600px; width:640px;}
+nav ul{overflow:hidden; overflow-y:scroll;}
+    </style>
 
-    <input type="text" id="target"><button id="query-btn">Query</button><br>
-    <canvas id="springydemo" width="640" height="480" style="border:1px solid #000000;"></canvas><br>
-    purple: starting router, green: final destination, yellow: request timeout
-    <ul id="logs">
-    </ul>
+    <div style="width: 100%;overflow:auto;">
+        <div style="float:left; width: 50%">
+            <input type="text" id="target"><button id="query-btn">Query</button><br>
+            <canvas id="springydemo" width="640" height="480" style="border:1px solid #000000;"></canvas><br>
+            <font color="red">orange</font>: current router<br>
+            <font color="purple">purple</font>: starting router<br>
+            <font color="green">green</font>: final destination<br>
+            <font color="orange">orange</font>: request timeout<br>
+        </div>
+        <div style="float:left;">
+            <nav>
+            <ul id="logs"></ul>
+                </nav>
+        </div>
+    </div>
+
 </body>
 </html>
