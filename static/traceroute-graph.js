@@ -63,7 +63,7 @@ $(document).on('click', '#query-btn', function() {
           if(newNodeData['addr'] in nodeDict) { // it already exists
             newNode = nodeDict[newNodeData['addr']];
 
-            
+
             if(previousNode === null) {
               newNode.data.color = "purple";
             } else {
