@@ -1,0 +1,201 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="initial-scale=1,maximum-scale=1,user-scalable=no">
+  <title>Intro to popups - 4.9</title>
+
+  <style>
+    html,
+    body,
+    #viewDiv {
+      padding: 0;
+      margin: 0;
+      height: 100%;
+      width: 100%;
+    }
+
+    #info {
+      color: #444;
+      font-family: "Avenir Next W00", "Helvetica Neue", Helvetica, Arial, sans-serif;
+      position: absolute;
+      top: 15px;
+      left: 10%;
+      padding: 5px;
+      margin: 5px;
+      width: 620px;
+      height: 30px;
+      border: solid 2px #666;
+      border-radius: 4px;
+      background-color: #fff;
+    }
+  </style>
+
+  <link rel="stylesheet" href="https://js.arcgis.com/4.9/esri/css/main.css">
+  <script src="https://js.arcgis.com/4.9/"></script>
+  <script src="http://ajax.googleapis.com/ajax/libs/jquery/1.7.1/jquery.min.js" type="text/javascript"></script>
+  <script src="https://code.jquery.com/jquery-3.3.1.min.js"
+              integrity="sha256-FgpCb/KJQlLNfOu91ta32o/NMZxltwRo8QtmkMRdAu8="
+              crossorigin="anonymous"></script>
+  <script>
+    var restaurants = [];
+    // d3.json("https://api.myjson.com/bins/5ye5o", function(error, json){
+    //   console.log(json);
+    // });
+    $.getJSON('https://api.myjson.com/bins/1ae5kc', function (json) {
+      // console.log(json.businesses)
+      var array = [];
+      for (var key in json.businesses) {
+          if (json.businesses.hasOwnProperty(key)) {
+              var item = json.businesses[key];
+              array.push({
+                  name: item.name,
+                  rating: item.rating,
+                  latitude: item.coordinates.latitude,
+                  longitude: item.coordinates.longitude
+              });
+          }
+      }
+      restaurants = array;
+      console.log(restaurants);
+    });
+    require([
+      "esri/tasks/Locator",
+      "esri/Map",
+      "esri/views/MapView",
+      "esri/geometry/Point",
+      "esri/Graphic"
+    ], function(
+      Locator,
+      Map,
+      MapView,
+      Point,
+      Graphic
+    ) {
+
+      // Set up a locator task using the world geocoding service
+      var locatorTask = new Locator({
+        url: "https://geocode.arcgis.com/arcgis/rest/services/World/GeocodeServer"
+      });
+
+      // Create the Map
+      var map = new Map({
+        basemap: "streets-navigation-vector"
+      });
+
+      // Create the MapView
+      var view = new MapView({
+        container: "viewDiv",
+        map: map,
+        center: [-116.3031, 43.6088],
+        zoom: 4
+      });
+
+      var p = new Point();
+      p.spetialReference = 3857;
+
+      /*************************
+       * Create a point graphic
+       *************************/
+      var point = [];
+      var pointGraphic = [];
+      // Create a symbol for drawing the point
+      var markerSymbol = [];
+      var template = { // autocasts as new PopupTemplate()
+        title: "Marriage in NY, Zip Code: {ZIP}",
+        content: [{
+          type: "fields",
+          fieldInfos: [{
+            fieldName: "longitude",
+            label: "longitude",
+            visible: true
+          }, {
+            fieldName: "latitude",
+            label: "latitude",
+            visible: true
+          }]
+        }]
+      };
+      console.log(restaurants.length);
+      for (i = 0; i < restaurants.length; i++){
+        // First create a point geometry (this is the location of the Titanic)
+        point[i] = {
+          type: "point", // autocasts as new Point()
+          longitude: restaurants[i].longitude,
+          latitude: restaurants[i].latitude
+        };
+
+        markerSymbol[i] = {
+          type: "simple-marker", // autocasts as new SimpleMarkerSymbol()
+          color: [255, 50-(restaurants[i].rating)*10, 10],
+          outline: { // autocasts as new SimpleLineSymbol()
+            color: [255, 255, 255],
+            width: 1
+          }
+        };
+
+        // Create a graphic and add the geometry and symbol to it
+        pointGraphic[i] = new Graphic({
+          geometry: point[i],
+          symbol: markerSymbol[i],
+          popupTemplate: template
+        });
+      }
+
+      /*******************************************************************
+       * This click event sets generic content on the popup not tied to
+       * a layer, graphic, or popupTemplate. The location of the point is
+       * used as input to a reverse geocode method and the resulting
+       * address is printed to the popup content.
+       *******************************************************************/
+      view.on("click", function(event) {
+        event.stopPropagation(); // overwrite default click-for-popup behavior
+
+        // Get the coordinates of the click on the view
+        var lat = Math.round(event.mapPoint.latitude * 1000) / 1000;
+        var lon = Math.round(event.mapPoint.longitude * 1000) / 1000;
+
+        view.popup.open({
+          // Set the popup's title to the coordinates of the location
+          title: "Reverse geocode: [" + lon + ", " + lat + "]",
+          location: event.mapPoint // Set the location of the popup to the clicked location
+        });
+
+        p.latitude = lat;
+        p.longitude = lon;
+        view.center = p;
+        // view.zoom = 8;
+
+        // Display the popup
+        // Execute a reverse geocode using the clicked location
+        locatorTask.locationToAddress(event.mapPoint).then(function(
+          response) {
+          // If an address is successfully found, show it in the popup's content
+          view.popup.content = response.address;
+        }).catch(function(error) {
+          // If the promise fails and no result is found, show a generic message
+          view.popup.content =
+            "No address was found for this location";
+        });
+      });
+
+      document.getElementById("btn").addEventListener("click", function() {
+        var cityName = document.getElementById("cityName").value;
+        // view.center = p; city coordinates
+      });
+
+      // Add the graphics to the view's graphics layer
+      view.graphics.addMany(pointGraphic);
+    });
+  </script>
+</head>
+
+<body>
+  <div id="viewDiv"></div>
+  <div id="info">
+    City Name: <input type="number" id="cityName"></input>
+    <button type="button" id="btn">Go</button>
+  </div>
+</body>
+
+</html>

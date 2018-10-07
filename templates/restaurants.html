@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html>
+<meta charset="utf-8">
+<head>
+	<script src="http://d3js.org/d3.v4.0.0-alpha.50.min.js"></script>
+	<script src="http://d3js.org/topojson.v1.min.js"></script>
+	<style>
+		.feature {
+			fill: none;
+			stroke: grey;
+			stroke-width: 1px;
+	  		stroke-linejoin: round;
+		}
+		.mesh {
+			fill: none;
+	  		stroke: lightgrey;
+	  		stroke-width: 2px;
+	  		stroke-linejoin: round;
+		}
+		#info {
+			color: #444;
+			font-family: "Avenir Next W00", "Helvetica Neue", Helvetica, Arial, sans-serif;
+			position: absolute;
+			top: 15px;
+			left: 50%;
+			padding: 5px;
+			margin: 5px;
+			width: 300px;
+			height: 20px;
+			border: solid 2px #666;
+			border-radius: 4px;
+			background-color: #fff;
+		}
+	</style>
+	<script>
+		function Create2DArray(rows) {
+			var arr = [];
+
+			for (var i=0;i<rows;i++) {
+				arr[i] = [];
+			}
+
+			return arr;
+		}
+
+		var width = 950,
+				height = 620;
+
+		// set projection
+		var projection = d3.geoEquirectangular();
+
+		// create path variable
+		var path = d3.geoPath(projection);
+//old dataset with 3 entries
+		d3.json("https://d3js.org/us-10m.v1.json", function(topo){
+			d3.json("https://api.myjson.com/bins/5ye5o", function(error, json){
+				states = topojson.feature(topo, topo.objects.states).features
+
+				// set projection parameters
+				projection
+					.scale(1000)
+					.center([-106, 37.5])
+
+				// create svg variable
+				var svg = d3.select("body").append("svg")
+								.attr("width", width)
+								.attr("height", height)
+								.call(d3.zoom().on("zoom", function () {
+									 svg.attr("transform", d3.event.transform)
+								}))
+								.append("g");
+
+				// points
+				var points = Create2DArray(json.length);
+				var i = 0;
+				for (i = 0; i < json.length; i++){
+					points[i][0] = json[i].longitude;
+					points[i][1] = json[i].latitude;
+				}
+
+				// add states from topojson
+				svg.selectAll("path")
+					.data(states).enter()
+					.append("path")
+					.attr("class", "feature")
+					.style("fill", "steelblue")
+					.attr("d", path)
+					.attr("cursor", "pointer");
+
+				// put boarder around states
+				svg.append("path")
+					.datum(topojson.mesh(topo, topo.objects.states, function(a, b) { return a !== b; }))
+					.attr("class", "mesh")
+					.attr("d", path);
+
+				var j;
+				// add circles to svg
+				console.log(points.length);
+				for (j = 0; j < points.length; j++){
+					svg.append("circle")
+						.attr("cx", projection(points[j])[0])
+						.attr("cy", projection(points[j])[1])
+						.attr("r", (Math.floor(json[j].ranking)*2).toString() + "px")
+						.attr("fill", "red")
+						.on('click', function(d, i) {
+							d3.select(this)
+								.transition()
+								.attr('r', "10px");
+						});
+				}
+			});
+		});
+		function zoomToCity(){
+			console.log(document.getElementById("cityName").value);
+		}
+	</script>
+
+</head>
+<body>
+	<div id="info">
+		City Name: <input type="text" id="cityName"></input>
+		<button onclick="zoomToCity()">Go</button>
+	</div>
+</body>
+</html>
